@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفيق - رفيقك الذكي في رحلتك التعليمية</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero container animate-fade-in">
+        <div class="hero-content">
+            <h1 class="floating">مرحباً، أنا رفيق! 👋</h1>
+            <p>أنا لست مجرد تطبيق، أنا صديقك الذي يفهم كيف تتعلم. سأكتشف نقاط قوتك وسنعمل معاً على تقوية نقاط الضعف
+                بطريقة ممتعة!</p>
+            <button id="start-quiz-btn" class="btn-primary">ابدأ رحلتي الاستكشافية 🚀</button>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz-section" class="container hidden animate-fade-in">
+        <div class="quiz-progress-container"
+            style="width: 100%; height: 8px; background: #E2E8F0; border-radius: 10px; margin-bottom: 2rem; overflow: hidden;">
+            <div id="quiz-progress-bar"
+                style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); transition: width 0.4s ease;">
+            </div>
+        </div>
+        <div id="quiz-container" class="quiz-container">
+            <div id="question-text" style="font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 600;"></div>
+            <div id="options-container"></div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="container hidden animate-fade-in">
+        <h2 class="section-title">خطة إنقاذك المخصصة 🛠️</h2>
+        <div id="stats-container" class="glass"
+            style="padding: 1.5rem; border-radius: var(--radius); margin-bottom: 2rem; display: flex; justify-content: space-around; text-align: center;">
+            <div>
+                <p style="color: var(--text-muted);">النقاط المجمعة</p>
+                <h3 id="score-val" style="font-size: 2rem; color: var(--primary);">0</h3>
+            </div>
+            <div>
+                <p style="color: var(--text-muted);">الخبرة (XP)</p>
+                <h3 id="xp-val" style="font-size: 2rem; color: #8B5CF6;">0</h3>
+            </div>
+            <div>
+                <p style="color: var(--text-muted);">المستوى</p>
+                <h3 id="rank-val" style="font-size: 2rem; color: var(--secondary);">مبتدئ</h3>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem;">المهام المقترحة لك:</h3>
+        <div id="rescue-plan-container"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Rescue plan items injected here -->
+        </div>
+    </section>
+
+    <!-- Al Bot Assistant -->
+    <div id="chat-buddy" class="chat-buddy glass">
+        <div class="chat-header">
+            <span style="font-size: 1.5rem;">🤖</span>
+            <span>دردشة رفيق</span>
+        </div>
+        <div id="chat-body" class="chat-body">
+            <div class="message msg-bot">أهلاً بك! أنا هنا لمساعدتك في أي وقت. كيف تشعر اليوم؟</div>
+        </div>
+        <div class="chat-input-container"
+            style="padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); display: flex; gap: 8px;">
+            <input type="text" id="chat-input" placeholder="اكتب سؤالك هنا..."
+                style="flex: 1; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0.5rem 1rem; outline: none;">
+            <button id="send-chat-btn"
+                style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer;">إرسال</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "openai": "https://cdn.jsdelivr.net/npm/openai@4.28.0/+esm"
+          }
+        }
+    </script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
