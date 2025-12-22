@@ -1,14 +1,6 @@
-import OpenAI from "openai";
-
 // --- AI Configuration ---
-// IMPORTANT: Paste your OpenAI API Key here
-// Note: This is a client-side implementation for demo purposes. In production, use a backend proxy.
-const API_KEY = "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";
-
-const openai = new OpenAI({
-    apiKey: API_KEY,
-    dangerouslyAllowBrowser: true // Required for client-side usage
-});
+// IMPORTANT: OpenAI API Key
+const API_KEY = "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";
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -18,48 +10,31 @@ const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح
 - شجع الطالب دائماً بكلمات مثل "يا بطل"، "يا ذكي"، "رائع".
 - ركز على تشخيص نقاط الضعف التي تظهر في نتائج الطالب المذكورة في سياق المحادثة.`;
 
-let chatHistory = [
-    { role: "system", content: SYSTEM_PROMPT }
-];
-
+let chatMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
 // --- Data Configuration ---
 const quizData = [
-    {
-        id: 1,
-        question: "إذا كان معك 5 تفاحات وأعطاك صديقك 3 تفاحات أخرى، كم تفاحة معك الآن؟",
-        category: "addition",
-        options: ["7", "8", "9", "5"],
-        correct: 1
-    },
-    {
-        id: 2,
-        question: "ما هو ناتج طرح 15 من 20؟",
-        category: "subtraction",
-        options: ["5", "10", "15", "2"],
-        correct: 0
-    },
-    {
-        id: 3,
-        question: "أي من الكسور التالية يمثل النصف؟",
-        category: "fractions",
-        options: ["1/3", "1/4", "1/2", "2/3"],
-        correct: 2
-    },
-    {
-        id: 4,
-        question: "ناتج عملية الضرب 4 × 3 هو:",
-        category: "multiplication",
-        options: ["7", "10", "12", "16"],
-        correct: 2
-    },
-    {
-        id: 5,
-        question: "ما هو الكسر المساوي لـ 2/4؟",
-        category: "fractions",
-        options: ["1/2", "1/3", "1/4", "3/4"],
-        correct: 0
-    }
+    { id: 1, question: "إذا كان معك 5 تفاحات وأعطاك صديقك 3 تفاحات أخرى، كم تفاحة معك الآن؟", category: "addition", options: ["7", "8", "9", "5"], correct: 1 },
+    { id: 2, question: "ما هو ناتج طرح 15 من 20؟", category: "subtraction", options: ["5", "10", "15", "2"], correct: 0 },
+    { id: 3, question: "أي من الكسور التالية يمثل النصف؟", category: "fractions", options: ["1/3", "1/4", "1/2", "2/3"], correct: 2 },
+    { id: 4, question: "ناتج عملية الضرب 4 × 3 هو:", category: "multiplication", options: ["7", "10", "12", "16"], correct: 2 },
+    { id: 5, question: "ما هو الكسر المساوي لـ 2/4؟", category: "fractions", options: ["1/2", "1/3", "1/4", "3/4"], correct: 0 },
+    // New Questions
+    { id: 6, question: "ما هو ناتج جمع 12 + 15؟", category: "addition", options: ["25", "27", "30", "22"], correct: 1 },
+    { id: 7, question: "إذا كان معك 50 قرشاً وصرفت 20 قرشاً، كم تبقى معك؟", category: "subtraction", options: ["20", "25", "30", "35"], correct: 2 },
+    { id: 8, question: "كم يساوي 5 × 5؟", category: "multiplication", options: ["20", "25", "30", "15"], correct: 1 },
+    { id: 9, question: "ما هو ناتج قسمة 10 على 2؟", category: "division", options: ["2", "4", "5", "6"], correct: 2 },
+    { id: 10, question: "كم عدد أضلاع المربع؟", category: "geometry", options: ["3", "4", "5", "6"], correct: 1 },
+    { id: 11, question: "ما هو ناتج جمع 100 + 200؟", category: "addition", options: ["300", "400", "500", "250"], correct: 0 },
+    { id: 12, question: "أي شكل له 3 أضلاع؟", category: "geometry", options: ["مربع", "مستطيل", "مثلث", "دائرة"], correct: 2 },
+    { id: 13, question: "ما هو ناتج 12 ÷ 3؟", category: "division", options: ["2", "3", "4", "5"], correct: 2 },
+    { id: 14, question: "كم دقيقة في الساعة الواحدة؟", category: "logic", options: ["30", "50", "60", "100"], correct: 2 },
+    { id: 15, question: "إذا كان اليوم هو الأحد، فما هو يوم غد؟", category: "logic", options: ["السبت", "الاثنين", "الثلاثاء", "الاربعاء"], correct: 1 },
+    { id: 16, question: "ما هو ناتج 9 × 2؟", category: "multiplication", options: ["11", "18", "20", "15"], correct: 1 },
+    { id: 17, question: "ما هو ناتج طرح 100 من 150؟", category: "subtraction", options: ["50", "60", "40", "100"], correct: 0 },
+    { id: 18, question: "ما هو ضعف العدد 7؟", category: "addition", options: ["10", "14", "21", "12"], correct: 1 },
+    { id: 19, question: "كم هو 20 ÷ 4؟", category: "division", options: ["4", "5", "6", "10"], correct: 1 },
+    { id: 20, question: "ما هو اسم الشكل الذي ليس له أضلاع؟", category: "geometry", options: ["مثلث", "مربع", "دائرة", "خماسي"], correct: 2 }
 ];
 
 const lessonsData = {
@@ -82,6 +57,21 @@ const lessonsData = {
         title: "عجائب الضرب",
         video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
         tips: ["الضرب هو جمع متكرر", "احفظ الجداول بالتدريج"]
+    },
+    division: {
+        title: "أسرار القسمة",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        tips: ["القسمة هي توزيع بالتساوي", "فكر في الضرب بالعكس"]
+    },
+    geometry: {
+        title: "عالم الأشكال",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        tips: ["لاحظ الأشكال من حولك", "عد الأضلاع والزوايا"]
+    },
+    logic: {
+        title: "التفكير الذكي",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        tips: ["فكر قبل الإجابة", "استخدم المنطق لحل الألغاز"]
     }
 };
 
@@ -91,7 +81,8 @@ let currentState = {
     answers: [],
     score: 0,
     xp: 0,
-    weaknesses: []
+    weaknesses: [],
+    badges: []
 };
 
 // --- DOM Elements ---
@@ -110,13 +101,23 @@ const sendChatBtn = document.getElementById('send-chat-btn');
 const progressBar = document.getElementById('quiz-progress-bar');
 const xpValDisplay = document.getElementById('xp-val');
 
+const toggleChatBtn = document.getElementById('toggle-chat-btn');
+
 // --- Initialization ---
-startBtn.addEventListener('click', () => {
-    heroSection.classList.add('hidden');
-    quizSection.classList.remove('hidden');
-    chatBuddy.classList.add('active');
-    loadQuestion();
-});
+if (startBtn) {
+    startBtn.addEventListener('click', () => {
+        heroSection.classList.add('hidden');
+        quizSection.classList.remove('hidden');
+        chatBuddy.classList.add('active');
+        loadQuestion();
+    });
+}
+
+if (toggleChatBtn) {
+    toggleChatBtn.addEventListener('click', () => {
+        chatBuddy.classList.toggle('minimized');
+    });
+}
 
 function loadQuestion() {
     const q = quizData[currentState.currentQuestionIndex];
@@ -132,7 +133,6 @@ function loadQuestion() {
     });
 
     updateProgressBar();
-
     addBotMessage(`هيا يا بطل! السؤال ${currentState.currentQuestionIndex + 1} عن ${getCategoryNameInArabic(q.category)}.`);
 }
 
@@ -144,16 +144,9 @@ function updateProgressBar() {
 function selectOption(index) {
     const q = quizData[currentState.currentQuestionIndex];
     const isCorrect = index === q.correct;
-
-    currentState.answers.push({
-        category: q.category,
-        correct: isCorrect
-    });
-
+    currentState.answers.push({ category: q.category, correct: isCorrect });
     if (isCorrect) currentState.score += 20;
-
     currentState.currentQuestionIndex++;
-
     if (currentState.currentQuestionIndex < quizData.length) {
         loadQuestion();
     } else {
@@ -164,28 +157,57 @@ function selectOption(index) {
 function finishQuiz() {
     quizSection.classList.add('hidden');
     dashboardSection.classList.remove('hidden');
-
-    // Calculate XP
     currentState.xp = currentState.answers.filter(a => a.correct).length * 50;
 
     analyzeResults();
+    checkBadges();
     renderDashboard();
-    addBotMessage(`رائع! لقد انتهينا. لقد حصلت على ${currentState.xp} نقطة خبرة (XP)! لقد صممت لك خطة تدريب مخصصة.`);
+    renderBadges();
+
+    // Celebration!
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#2DD4BF', '#FDE047', '#F43F5E']
+    });
+
+    addBotMessage(`رائع! لقد انتهينا. حصلت على ${currentState.xp} نقطة خبرة (XP)! لقد صممت لك خطة مخصصة.`);
+}
+
+function checkBadges() {
+    const correctCount = currentState.answers.filter(a => a.correct).length;
+
+    if (correctCount === quizData.length) {
+        currentState.badges.push({ name: "العبقري الكامل", icon: "💎" });
+    }
+    if (currentState.score >= 100) {
+        currentState.badges.push({ name: "بطل الرياضيات", icon: "🏆" });
+    }
+    if (currentState.answers.length >= 10) {
+        currentState.badges.push({ name: "المثابر", icon: "🔥" });
+    }
+}
+
+function renderBadges() {
+    const badgesList = document.getElementById('badges-list');
+    if (!badgesList) return;
+    badgesList.innerHTML = '';
+    currentState.badges.forEach(badge => {
+        const div = document.createElement('div');
+        div.className = 'badge-item';
+        div.innerHTML = `<span class="badge-icon">${badge.icon}</span><span class="badge-name">${badge.name}</span>`;
+        badgesList.appendChild(div);
+    });
 }
 
 function analyzeResults() {
     const categories = [...new Set(quizData.map(q => q.category))];
-    const categoryScores = {};
-    currentState.weaknesses = []; // Reset weaknesses
-
+    currentState.weaknesses = [];
     categories.forEach(cat => {
         const catQuestions = currentState.answers.filter(a => a.category === cat);
         const correctCount = catQuestions.filter(a => a.correct).length;
-        categoryScores[cat] = (correctCount / catQuestions.length) * 100;
-
-        if (categoryScores[cat] < 70) {
-            currentState.weaknesses.push(cat);
-        }
+        if ((correctCount / catQuestions.length) * 100 < 70) currentState.weaknesses.push(cat);
     });
 }
 
@@ -193,107 +215,98 @@ function renderDashboard() {
     document.getElementById('score-val').innerText = currentState.score;
     document.getElementById('xp-val').innerText = currentState.xp;
     document.getElementById('rank-val').innerText = currentState.score > 80 ? "عبقري" : (currentState.score > 40 ? "مجتهد" : "مكافح");
-
     rescuePlanContainer.innerHTML = '';
-
     if (currentState.weaknesses.length === 0) {
-        rescuePlanContainer.innerHTML = `<div class="glass" style="grid-column: 1/-1; padding: 2rem; text-align: center;">
-            <h3>أنت مذهل! 🌟</h3>
-            <p>لقد أجبت على كل شيء بشكل صحيح. جرب تحديات أكثر صعوبة!</p>
-        </div>`;
+        rescuePlanContainer.innerHTML = `<div class="glass" style="grid-column: 1/-1; padding: 2rem; text-align: center;"><h3>أنت مذهل! 🌟</h3><p>أجبت على كل شيء بشكل صحيح.</p></div>`;
         return;
     }
-
     currentState.weaknesses.forEach(weak => {
         const lesson = lessonsData[weak];
         const card = document.createElement('div');
         card.className = 'glass lesson-card';
         card.style.padding = '1.5rem';
-        card.style.borderRadius = 'var(--radius)';
-        card.innerHTML = `
-            <h4 style="color: var(--primary); margin-bottom: 10px;">${lesson.title}</h4>
-            <div style="aspect-ratio: 16/9; background: #eee; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <iframe width="100%" height="100%" src="${lesson.video}" frameborder="0" allowfullscreen></iframe>
-            </div>
-            <ul style="padding-right: 20px; font-size: 0.9rem; color: var(--text-muted);">
-                ${lesson.tips.map(t => `<li>${t}</li>`).join('')}
-            </ul>
-        `;
+        card.innerHTML = `<h4 style="color: var(--primary);">${lesson.title}</h4><div style="aspect-ratio: 16/9; margin: 10px 0;"><iframe width="100%" height="100%" src="${lesson.video}" frameborder="0" allowfullscreen></iframe></div><ul style="padding-right: 20px;">${lesson.tips.map(t => `<li>${t}</li>`).join('')}</ul>`;
         rescuePlanContainer.appendChild(card);
     });
 }
 
-// --- Helper Functions ---
 function getCategoryNameInArabic(cat) {
     const names = {
         addition: "الجمع",
         subtraction: "الطرح",
         fractions: "الكسور",
-        multiplication: "الضرب"
+        multiplication: "الضرب",
+        division: "القسمة",
+        geometry: "الهندسة",
+        logic: "المنطق"
     };
     return names[cat] || cat;
 }
 
-// --- Chat Interaction ---
 sendChatBtn.addEventListener('click', handleUserMessage);
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleUserMessage();
-});
+chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUserMessage(); });
 
 async function handleUserMessage() {
     const text = chatInput.value.trim();
-
-    // Check if API key is still the placeholder or looks invalid
-    const isPlaceholder = API_KEY === "YOUR_OPENAI_API_KEY_HERE";
-
     if (!text) return;
 
-    if (isPlaceholder) {
-        addBotMessage("أهلاً بك! يبدو أن مفتاح OpenAI API غير مضبوط بشكل صحيح. يرجى التأكد من وضعه في ملف app.js.");
-        chatInput.value = '';
+    // Check if running via file://
+    if (window.location.protocol === 'file:') {
+        addBotMessage("⚠️ يرجى تشغيل المتصفح باستخدام 'Live Server' (عبر منفذ 5500) بدلاً من فتح الملف مباشرة، لضمان عمل الاتصال.");
         return;
     }
 
     addUserMessage(text);
     chatInput.value = '';
 
-    // Show typing indicator
     const tempMsg = document.createElement('div');
     tempMsg.className = 'message msg-bot';
     tempMsg.innerText = "... رفيق يفكر ...";
     chatBody.appendChild(tempMsg);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // Add user message to history
-    chatHistory.push({ role: "user", content: text });
+    chatMessages.push({ role: "user", content: text });
+
+    // Improved proxy usage
+    const API_URL = "https://api.openai.com/v1/chat/completions";
+    const PROXY_URL = "https://corsproxy.io/?" + API_URL;
 
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // Optimized model
-            messages: chatHistory,
+        const response = await fetch(PROXY_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: chatMessages,
+                temperature: 0.7
+            })
         });
 
-        const botResponse = response.choices[0].message.content;
-
-        // Add bot response to history
-        chatHistory.push({ role: "assistant", content: botResponse });
-
-        tempMsg.remove();
-        addBotMessage(botResponse);
-    } catch (error) {
-        console.error("OpenAI Error Details:", error);
-        tempMsg.remove();
-
-        let errorMessage = "عذراً، حدث خطأ في التواصل مع OpenAI.";
-        if (error.status === 401) {
-            errorMessage = "🔑 عذراً، مفتاح API غير صالح. تأكد من وضعه بشكل صحيح.";
-        } else if (error.status === 429) {
-            errorMessage = "⏳ تم تجاوز حد الطلبات المسموح به. يرجى المحاولة لاحقاً.";
-        } else if (error.status === 500) {
-            errorMessage = "🌐 حدث خطأ في خوادم OpenAI. يرجى المحاولة لاحقاً.";
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `خطأ: ${response.status}`);
         }
 
-        addBotMessage(errorMessage);
+        const data = await response.json();
+        const botResponse = data.choices[0].message.content;
+        tempMsg.remove();
+        addBotMessage(botResponse);
+        chatMessages.push({ role: "assistant", content: botResponse });
+    } catch (error) {
+        console.error("OpenAI Connection Error:", error);
+        tempMsg.remove();
+
+        let errorMsg = "عذراً يا بطل، حدث خطأ في التواصل.";
+        if (error.message.includes("429")) {
+            errorMsg = "⏳ تم تجاوز حد الطلبات. تأكد من أن حسابك به رصيد (Credit).";
+        } else if (error.message.includes("fetch") || error.message.includes("Connection error")) {
+            errorMsg = "🚫 خطأ في الاتصال: يرجى تفعيل إضافة 'Allow CORS' في المتصفح، أو التأكد من تشغيل Live Server.";
+        }
+
+        addBotMessage(`${errorMsg}\n\n(التفاصيل: ${error.message})`);
     }
 }
 
