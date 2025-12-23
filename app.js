@@ -1,6 +1,6 @@
 // --- AI Configuration ---
 // IMPORTANT: OpenAI API Key
-const API_KEY = "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";
+const API_KEY = "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";
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -225,7 +225,7 @@ function renderDashboard() {
         const card = document.createElement('div');
         card.className = 'glass lesson-card';
         card.style.padding = '1.5rem';
-        card.innerHTML = `<h4 style="color: var(--primary);">${lesson.title}</h4><div style="aspect-ratio: 16/9; margin: 10px 0;"><iframe width="100%" height="100%" src="${lesson.video}" frameborder="0" allowfullscreen></iframe></div><ul style="padding-right: 20px;">${lesson.tips.map(t => `<li>${t}</li>`).join('')}</ul>`;
+        card.innerHTML = `<h4 style="color: var(--primary); margin-bottom: 1rem;">${lesson.title}</h4><ul style="padding-right: 20px; color: var(--text-muted);">${lesson.tips.map(t => `<li style="margin-bottom: 0.5rem;">${t}</li>`).join('')}</ul>`;
         rescuePlanContainer.appendChild(card);
     });
 }
@@ -267,9 +267,11 @@ async function handleUserMessage() {
 
     chatMessages.push({ role: "user", content: text });
 
-    // Improved proxy usage
+    // --- API Configuration ---
+    // IMPORTANT: Replace the placeholder below with your NEW OpenAI API Key
+    // You can get one from: https://platform.openai.com/api-keys
     const API_URL = "https://api.openai.com/v1/chat/completions";
-    const PROXY_URL = "https://corsproxy.io/?" + API_URL;
+    const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(API_URL);
 
     try {
         const response = await fetch(PROXY_URL, {
@@ -287,7 +289,17 @@ async function handleUserMessage() {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error?.message || `خطأ: ${response.status}`);
+            const errorMessage = errorData.error?.message || `Status: ${response.status}`;
+
+            if (response.status === 401) {
+                throw new Error("مفتاح API غير صالح. يرجى التأكد من استبدال المفتاح القديم بمفتاح جديد صالح في ملف app.js.");
+            } else if (response.status === 429) {
+                throw new Error("لقد تجاوزت حد الطلبات المسموح به. تأكد من وجود رصيد كافٍ في حساب OpenAI الخاص بك.");
+            } else if (response.status === 404) {
+                throw new Error("الموديل المطلوب غير موجود. تأكد من أن حسابك يدعم 'gpt-4o-mini'.");
+            }
+
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -299,14 +311,14 @@ async function handleUserMessage() {
         console.error("OpenAI Connection Error:", error);
         tempMsg.remove();
 
-        let errorMsg = "عذراً يا بطل، حدث خطأ في التواصل.";
-        if (error.message.includes("429")) {
-            errorMsg = "⏳ تم تجاوز حد الطلبات. تأكد من أن حسابك به رصيد (Credit).";
-        } else if (error.message.includes("fetch") || error.message.includes("Connection error")) {
-            errorMsg = "🚫 خطأ في الاتصال: يرجى تفعيل إضافة 'Allow CORS' في المتصفح، أو التأكد من تشغيل Live Server.";
-        }
+        let errorMsg = "عذراً يا بطل، حدثت مشكلة في الاتصال بالمساعد الذكي.";
 
-        addBotMessage(`${errorMsg}\n\n(التفاصيل: ${error.message})`);
+        // Detailed error for the user
+        addBotMessage(`${errorMsg}\n\n🔍 **التفاصيل الفنية:**\n${error.message}`);
+
+        if (error.message.includes("CORS") || error.message.includes("fetch")) {
+            addBotMessage("� **نصيحة:** إذا كنت تعمل محلياً، تأكد من استخدام 'Live Server' في VS Code ولا تفتح الملف مباشرة بالمتصفح.");
+        }
     }
 }
 
