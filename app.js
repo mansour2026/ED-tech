@@ -1,6 +1,6 @@
 // --- AI Configuration ---
 // IMPORTANT: OpenAI API Key
-const API_KEY = "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";
+const API_KEY = "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";
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -337,4 +337,5 @@ function addBotMessage(text) {
     chatBody.appendChild(msg);
     chatBody.scrollTop = chatBody.scrollHeight;
 }
+
 
