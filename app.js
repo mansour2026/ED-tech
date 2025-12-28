@@ -1,6 +1,6 @@
 // --- AI Configuration ---
 // IMPORTANT: OpenAI API Key
-const API_KEY = "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";
+const API_KEY = "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";
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
