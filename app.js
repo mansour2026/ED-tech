@@ -1,6 +1,6 @@
 // --- AI Configuration ---
 // IMPORTANT: OpenAI API Key
-const API_KEY = "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";
+const API_KEY = "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";
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -250,11 +250,6 @@ async function handleUserMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // Check if running via file://
-    if (window.location.protocol === 'file:') {
-        addBotMessage("⚠️ يرجى تشغيل المتصفح باستخدام 'Live Server' (عبر منفذ 5500) بدلاً من فتح الملف مباشرة، لضمان عمل الاتصال.");
-        return;
-    }
 
     addUserMessage(text);
     chatInput.value = '';
@@ -316,9 +311,6 @@ async function handleUserMessage() {
         // Detailed error for the user
         addBotMessage(`${errorMsg}\n\n🔍 **التفاصيل الفنية:**\n${error.message}`);
 
-        if (error.message.includes("CORS") || error.message.includes("fetch")) {
-            addBotMessage("� **نصيحة:** إذا كنت تعمل محلياً، تأكد من استخدام 'Live Server' في VS Code ولا تفتح الملف مباشرة بالمتصفح.");
-        }
     }
 }
 
@@ -337,5 +329,3 @@ function addBotMessage(text) {
     chatBody.appendChild(msg);
     chatBody.scrollTop = chatBody.scrollHeight;
 }
-
-
