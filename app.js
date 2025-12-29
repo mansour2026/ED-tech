@@ -1,17 +1,26 @@
-// --- AI Configuration ---
-// خيار 1: ضع مفتاحك هنا مباشرة (سهل ولكن قد يتم إيقافه من قبل جوجل إذا نشرت الكود)
-// في ملف app.js السطر رقم 3
-const HARDCODED_KEY = "AIzaSyCJBQ_JVAgiBSQjSldkrdFMF9xqFw7A9Xk";
+const API_KEY = "AIzaSyCB980uOBdCIe7I28eP_8AmdfsV4eMP4CA";
 
-// خيار 2: إذا تركت الخيار الأول فارغاً، سيطلب منك التطبيق المفتاح مرة واحدة ويحفظه في المتصفح
-function getApiKey() {
-    if (HARDCODED_KEY.trim() !== "") return HARDCODED_KEY.trim();
-    return localStorage.getItem('GEMINI_API_KEY');
+
+
+
+const typingEffect = (text, textElement, botMsgDiv) => {
+    textElement.textContent = "";
+    const words = text.split(" ");
+    let wordIndex = 0;
+
+    typingInterval = setInterval(() => {
+        if (wordIndex < words.length) {
+            textElement.textContent += (wordIndex === 0 ? "" : " ") + words[wordIndex++];
+            scrollToBottom();
+        } else {
+            clearInterval(typingInterval);
+            botMsgDiv.classList.remove("loading");
+            document.body.classList.remove("bot-responding");
+            stopResponseBtn.style.display = 'none';
+        }
+    }, 40);
 }
 
-function setApiKey(key) {
-    if (key) localStorage.setItem('GEMINI_API_KEY', key.trim());
-}
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -21,8 +30,21 @@ const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح
 - شجع الطالب دائماً بكلمات مثل "يا بطل"، "يا ذكي"، "رائع".
 - ركز على تشخيص نقاط الضعف التي تظهر في نتائج الطالب المذكورة في سياق المحادثة.`;
 
-let chatMessages = [];
+
+
+// --- State Management ---
+const chatHistory = [];
+const userData = { message: "", file: {} };
 let typingInterval, controller;
+
+let currentState = {
+    currentQuestionIndex: 0,
+    answers: [],
+    score: 0,
+    xp: 0,
+    weaknesses: [],
+    badges: []
+};
 
 // --- Data Configuration ---
 const quizData = [
@@ -58,48 +80,246 @@ const lessonsData = {
     logic: { title: "التفكير الذكي", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["فكر قبل الإجابة", "استخدم المنطق لحل الألغاز"] }
 };
 
-// --- State Management ---
-let currentState = {
-    currentQuestionIndex: 0,
-    answers: [],
-    score: 0,
-    xp: 0,
-    weaknesses: [],
-    badges: []
-};
-
 // --- DOM Elements ---
-const heroSection = document.getElementById('hero');
-const quizSection = document.getElementById('quiz-section');
-const dashboardSection = document.getElementById('dashboard');
-const quizContainer = document.getElementById('quiz-container');
-const questionText = document.getElementById('question-text');
-const optionsContainer = document.getElementById('options-container');
-const startBtn = document.getElementById('start-quiz-btn');
-const rescuePlanContainer = document.getElementById('rescue-plan-container');
-const chatBuddy = document.getElementById('chat-buddy');
-const chatBody = document.getElementById('chat-body');
-const chatInput = document.getElementById('chat-input');
-const sendChatBtn = document.getElementById('send-chat-btn');
-const progressBar = document.getElementById('quiz-progress-bar');
-const xpValDisplay = document.getElementById('xp-val');
-const toggleChatBtn = document.getElementById('toggle-chat-btn');
+let heroSection, quizSection, dashboardSection, quizContainer, questionText, optionsContainer,
+    startBtn, rescuePlanContainer, chatBuddy, chatBody, chatInput, sendChatBtn,
+    progressBar, xpValDisplay, toggleChatBtn, themeToggle, fileInput, addFileBtn,
+    cancelFileBtn, fileUploadWrapper, filePreview, stopResponseBtn;
 
-// --- Initialization ---
-if (startBtn) {
-    startBtn.addEventListener('click', () => {
-        heroSection.classList.add('hidden');
-        quizSection.classList.remove('hidden');
-        chatBuddy.classList.add('active');
+const scrollToBottom = () => chatBody?.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+// --- Helpers ---
+const createMsgElement = (content, ...classes) => {
+    const div = document.createElement("div");
+    div.classList.add("message", ...classes);
+    div.innerHTML = content;
+    return div;
+}
+
+// --- AI Core ---
+const generateResponse = async (botMsgDiv, currentMessage, currentFile) => {
+    const textElement = botMsgDiv.querySelector(".bot-text");
+    controller = new AbortController();
+
+    // Context preparation: Add persona and current message/file
+    const currentParts = [{ text: (chatHistory.length === 0 ? `التعليمات: ${SYSTEM_PROMPT} \n\n ${currentMessage}` : currentMessage) }];
+    if (currentFile.data) {
+        currentParts.push({ inline_data: { data: currentFile.data, mime_type: currentFile.mime_type } });
+    }
+
+    chatHistory.push({ role: "user", parts: currentParts });
+
+    const models = [
+        { name: "gemini-2.5-flash", versions: ["v1beta"] },
+        { name: "gemini-2.5-flash-lite", versions: ["v1beta"] },
+        { name: "gemini-2.0-flash", versions: ["v1beta"] },
+        { name: "gemini-2.0-flash-exp", versions: ["v1beta"] },
+        { name: "gemini-1.5-flash", versions: ["v1beta", "v1"] },
+        { name: "gemini-1.5-pro", versions: ["v1beta", "v1"] }
+    ];
+
+    let lastError = null;
+
+    for (const model of models) {
+        for (const version of model.versions) {
+            const url = `https://generativelanguage.googleapis.com/${version}/models/${model.name}:generateContent?key=${API_KEY}`;
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: chatHistory }),
+                    signal: controller.signal
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        console.warn(`Model ${model.name} (${version}) rate limited. Waiting...`);
+                        lastError = new Error("تم الوصول للحد الأقصى للطلبات (429).");
+                        await new Promise(r => setTimeout(r, 1500));
+                        continue;
+                    }
+                    if (response.status === 404) {
+                        console.warn(`Model ${model.name} not found on ${version}. Skipping...`);
+                        continue;
+                    }
+                    throw new Error(data.error?.message || "مشكلة في الخادم.");
+                }
+
+                if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                    const responseText = data.candidates[0].content.parts[0].text.trim();
+                    typingEffect(responseText, textElement, botMsgDiv);
+                    chatHistory.push({ role: "model", parts: [{ text: responseText }] });
+                    return; // Success!
+                }
+                throw new Error("تلقيت رداً غير مكتمل.");
+
+            } catch (error) {
+                lastError = error;
+                if (error.name === "AbortError") break;
+                console.error(`Attempt with ${model.name} (${version}) failed:`, error.message);
+                continue;
+            }
+        }
+    }
+
+
+
+    // If we get here, all models failed or was aborted
+    textElement.style.color = "#d92939";
+    textElement.textContent = lastError?.name === "AbortError" ? "تم توقيف التفكير." : `عذراً يا بطل! واجهتني مشكلة: ${lastError?.message}`;
+    botMsgDiv.classList.remove("loading");
+    document.body.classList.remove("bot-responding");
+    stopResponseBtn.style.display = 'none';
+    userData.file = {};
+}
+
+
+
+// --- Event Handlers ---
+const handleUserMessage = () => {
+    const text = chatInput.value.trim();
+    if (!text || document.body.classList.contains("bot-responding")) return;
+
+    // CAPTURE state immediately
+    const capturedMessage = text;
+    const capturedFile = { ...userData.file };
+
+    // Reset UI and global state immediately
+    chatInput.value = "";
+    userData.message = "";
+    userData.file = { data: null, mime_type: null };
+    document.body.classList.add("bot-responding");
+    fileUploadWrapper.classList.remove("active");
+    if (filePreview) filePreview.classList.remove("active");
+    if (cancelFileBtn) cancelFileBtn.click();
+
+    // Add user message to UI
+    const userMsgHTML = `<span>${capturedMessage}</span>${capturedFile.data ? `<img src="data:${capturedFile.mime_type};base64,${capturedFile.data}" class="img-attachment"/>` : ""}`;
+    const userMsgDiv = createMsgElement(userMsgHTML, "msg-user");
+    chatBody.appendChild(userMsgDiv);
+    scrollToBottom();
+
+    // Add bot loading placeholder
+    setTimeout(() => {
+        const botMsgHTML = `<span>🤖</span><span class="bot-text">... رفيق يفكر ...</span>`;
+        const botMsgDiv = createMsgElement(botMsgHTML, "msg-bot", "loading");
+        chatBody.appendChild(botMsgDiv);
+        stopResponseBtn.style.display = 'block';
+        scrollToBottom();
+        generateResponse(botMsgDiv, capturedMessage, capturedFile);
+    }, 600);
+}
+
+// --- Initialize Application ---
+function initApp() {
+    console.log("إطلاق رفيق... 🚀");
+
+    // Select Elements
+    heroSection = document.getElementById('hero');
+    quizSection = document.getElementById('quiz-section');
+    dashboardSection = document.getElementById('dashboard');
+    quizContainer = document.getElementById('quiz-container');
+    questionText = document.getElementById('question-text');
+    optionsContainer = document.getElementById('options-container');
+    startBtn = document.getElementById('start-quiz-btn');
+    rescuePlanContainer = document.getElementById('rescue-plan-container');
+    chatBuddy = document.getElementById('chat-buddy');
+    chatBody = document.getElementById('chat-body');
+    chatInput = document.getElementById('chat-input');
+    sendChatBtn = document.getElementById('send-chat-btn');
+    progressBar = document.getElementById('quiz-progress-bar');
+    xpValDisplay = document.getElementById('xp-val');
+    toggleChatBtn = document.getElementById('toggle-chat-btn');
+    themeToggle = document.getElementById('theme-toggle-btn');
+    fileInput = document.getElementById('file-input');
+    addFileBtn = document.getElementById('add-file-btn');
+    cancelFileBtn = document.getElementById('cancel-file-btn');
+    fileUploadWrapper = document.querySelector('.file-upload-wrapper');
+    filePreview = document.querySelector('.file-preview');
+    stopResponseBtn = document.getElementById('stop-response-btn');
+
+    // Chat Listeners
+    sendChatBtn?.addEventListener('click', handleUserMessage);
+    chatInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUserMessage(); });
+
+    fileInput?.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const base64String = e.target.result.split(",")[1];
+            if (filePreview) filePreview.src = e.target.result;
+            fileUploadWrapper?.classList.add("active");
+            userData.file = { data: base64String, mime_type: file.type };
+        }
+    });
+
+    cancelFileBtn?.addEventListener('click', () => {
+        userData.file = {};
+        fileUploadWrapper?.classList.remove("active");
+    });
+
+    addFileBtn?.addEventListener('click', () => fileInput?.click());
+
+    stopResponseBtn?.addEventListener('click', () => {
+        controller?.abort();
+        clearInterval(typingInterval);
+        const lastBotMsg = chatBody?.lastElementChild;
+        if (lastBotMsg && lastBotMsg.classList.contains("loading")) {
+            lastBotMsg.classList.remove("loading");
+            const textEl = lastBotMsg.querySelector(".bot-text");
+            if (textEl) textEl.innerText += " (تم الإيقاف)";
+        }
+        document.body.classList.remove("bot-responding");
+        if (stopResponseBtn) stopResponseBtn.style.display = 'none';
+    });
+
+
+
+    themeToggle?.addEventListener('click', () => {
+        const isLight = document.body.classList.toggle('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        if (themeToggle) themeToggle.innerText = isLight ? '☀️' : '🌙';
+    });
+
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-theme');
+        if (themeToggle) themeToggle.innerText = '☀️';
+    }
+
+    document.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (chatInput) {
+                chatInput.value = item.innerText;
+                handleUserMessage();
+            }
+        });
+    });
+
+    // Quiz Listeners
+    startBtn?.addEventListener('click', () => {
+        heroSection?.classList.add('hidden');
+        quizSection?.classList.remove('hidden');
+        chatBuddy?.classList.add('active');
         loadQuestion();
     });
-}
 
-if (toggleChatBtn) {
-    toggleChatBtn.addEventListener('click', () => {
-        chatBuddy.classList.toggle('minimized');
+    toggleChatBtn?.addEventListener('click', () => {
+        chatBuddy?.classList.toggle('minimized');
     });
 }
+
+
+// Safe Loading
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
+
 
 function loadQuestion() {
     const q = quizData[currentState.currentQuestionIndex];
@@ -113,7 +333,6 @@ function loadQuestion() {
         optionsContainer.appendChild(btn);
     });
     updateProgressBar();
-    addBotMessage(`هيا يا بطل! السؤال ${currentState.currentQuestionIndex + 1} عن ${getCategoryNameInArabic(q.category)}.`);
 }
 
 function updateProgressBar() {
@@ -143,7 +362,6 @@ function finishQuiz() {
     renderDashboard();
     renderBadges();
     confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#2DD4BF', '#FDE047', '#F43F5E'] });
-    addBotMessage(`رائع! لقد انتهينا. حصلت على ${currentState.xp} نقطة خبرة (XP)! لقد صممت لك خطة مخصصة.`);
 }
 
 function checkBadges() {
@@ -197,169 +415,4 @@ function renderDashboard() {
 function getCategoryNameInArabic(cat) {
     const names = { addition: "الجمع", subtraction: "الطرح", fractions: "الكسور", multiplication: "الضرب", division: "القسمة", geometry: "الهندسة", logic: "المنطق" };
     return names[cat] || cat;
-}
-
-// --- AI Logic Enhancements (Typing Effect & Abort) ---
-function typingEffect(text, textElement, botMsgDiv) {
-    textElement.textContent = "";
-    const words = text.split(" ");
-    let wordIndex = 0;
-
-    typingInterval = setInterval(() => {
-        if (wordIndex < words.length) {
-            textElement.textContent += (wordIndex === 0 ? "" : " ") + words[wordIndex++];
-            chatBody.scrollTop = chatBody.scrollHeight;
-        } else {
-            clearInterval(typingInterval);
-            botMsgDiv.classList.remove("loading");
-            document.getElementById('stop-response-btn').style.display = 'none';
-        }
-    }, 40);
-}
-
-document.getElementById('stop-response-btn')?.addEventListener('click', () => {
-    controller?.abort();
-    clearInterval(typingInterval);
-    const lastBotMsg = chatBody.querySelector('.msg-bot.loading');
-    if (lastBotMsg) {
-        lastBotMsg.classList.remove('loading');
-        const textEl = lastBotMsg.querySelector('.bot-text');
-        if (textEl) textEl.innerText += " (تم الإيقاف)";
-    }
-    document.getElementById('stop-response-btn').style.display = 'none';
-});
-
-// --- Suggestions Handler ---
-document.querySelectorAll('.suggestion-item').forEach(item => {
-    item.addEventListener('click', () => {
-        chatInput.value = item.innerText;
-        handleUserMessage();
-    });
-});
-
-sendChatBtn.addEventListener('click', handleUserMessage);
-chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUserMessage(); });
-
-async function handleUserMessage() {
-    let currentKey = getApiKey();
-    if (!currentKey) {
-        currentKey = prompt("من فضلك أدخل مفتاح Gemini API الخاص بك للاستمرار (يمكنك الحصول عليه من Google AI Studio):");
-        if (currentKey) {
-            setApiKey(currentKey);
-        } else {
-            addBotMessage("عذراً، أحتاج إلى مفتاح API لكي أتمكن من الرد عليك. يرجى تحديث الصفحة وإدخاله.");
-            return;
-        }
-    }
-
-    const text = chatInput.value.trim();
-    if (!text) return;
-
-    addUserMessage(text);
-    chatInput.value = '';
-
-    // Create bot message placeholder with loading state
-    const botMsgDiv = document.createElement('div');
-    botMsgDiv.className = 'message msg-bot loading';
-
-    const avatar = document.createElement('span');
-    avatar.innerText = "🤖";
-    avatar.style.marginLeft = "8px";
-
-    const textElement = document.createElement('span');
-    textElement.className = "bot-text";
-    textElement.innerText = "... رفيق يفكر ...";
-
-    botMsgDiv.appendChild(avatar);
-    botMsgDiv.appendChild(textElement);
-    chatBody.appendChild(botMsgDiv);
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    // Show stop button
-    document.getElementById('stop-response-btn').style.display = 'block';
-
-    // Setup AbortController
-    controller = new AbortController();
-
-    // Prepare message history
-    if (chatMessages.length === 0) {
-        chatMessages.push({ role: "user", parts: [{ text: `التعليمات: ${SYSTEM_PROMPT}\n\nرسالتي الأولى هي: ${text}` }] });
-    } else {
-        chatMessages.push({ role: "user", parts: [{ text: text }] });
-    }
-
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`;
-
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: chatMessages,
-                generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-            }),
-            signal: controller.signal
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const errorMessage = errorData.error?.message || `Status: ${response.status}`;
-            const technicalError = new Error(errorMessage);
-            technicalError.geminiError = errorMessage;
-            technicalError.status = response.status;
-            throw technicalError;
-        }
-
-        const data = await response.json();
-        const responseText = data.candidates[0].content.parts[0].text.trim();
-
-        // Use typing effect for the response
-        textElement.innerText = ""; // Clear the loading text
-        typingEffect(responseText, textElement, botMsgDiv);
-
-        chatMessages.push({ role: "model", parts: [{ text: responseText }] });
-
-    } catch (error) {
-        console.error("Gemini Connection Error:", error);
-        botMsgDiv.classList.remove("loading");
-
-        if (error.name === "AbortError") {
-            textElement.innerText = "تم إيقاف التفكير.";
-            textElement.style.color = "#d92939";
-            document.getElementById('stop-response-btn').style.display = 'none';
-            return;
-        }
-
-        let errorMsg = "عذراً يا بطل، حدثت مشكلة في الاتصال بالمساعد الذكي.";
-        let detailedError = error.message;
-
-        document.getElementById('stop-response-btn').style.display = 'none';
-
-        if (error.geminiError) {
-            detailedError = `Gemini Error: ${error.geminiError}\nStatus: ${error.status}`;
-            if (error.status === 400 || error.status === 401) {
-                localStorage.removeItem('GEMINI_API_KEY');
-                detailedError += "\n\n⚠️ يبدو أن المفتاح غير صالح. تم مسحه من الذاكرة، يرجى المحاولة مرة أخرى بمفتاح جديد.";
-            }
-        }
-
-        textElement.innerHTML = `<strong>${errorMsg}</strong><br><small>🔍 التفاصيل الفنية:<br>${detailedError}</small>`;
-        textElement.style.color = "#d92939";
-    }
-}
-
-function addUserMessage(text) {
-    const msg = document.createElement('div');
-    msg.className = 'message msg-user';
-    msg.innerText = text;
-    chatBody.appendChild(msg);
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-function addBotMessage(text) {
-    const msg = document.createElement('div');
-    msg.className = 'message msg-bot';
-    msg.innerText = text;
-    chatBody.appendChild(msg);
-    chatBody.scrollTop = chatBody.scrollHeight;
 }

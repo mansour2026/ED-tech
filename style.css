@@ -3,13 +3,13 @@
     --primary-dark: #0D9488;
     --secondary: #FDE047;
     --accent: #F43F5E;
-    --bg-main: #F8FAFC;
-    --bg-card: #FFFFFF;
-    --text-main: #1E293B;
-    --text-muted: #64748B;
+    --bg-main: #0F172A;
+    --bg-card: #1E293B;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
     --radius: 20px;
-    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    --glass: rgba(255, 255, 255, 0.8);
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --glass: rgba(30, 41, 59, 0.7);
 }
 
 * {
@@ -25,15 +25,17 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     direction: rtl;
-    /* Support Arabic by default */
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Glassmorphism Utility */
 .glass {
     background: var(--glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 /* Animations */
@@ -80,13 +82,31 @@ body {
 
 /* Hero Section */
 .hero {
-    min-height: 90vh;
+    min-height: 80vh;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     text-align: center;
+    background: radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+    border-radius: 40px;
+    margin-top: 2rem;
     position: relative;
+    overflow: hidden;
+    transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: var(--primary);
+    filter: blur(100px);
+    bottom: -50px;
+    right: -50px;
+    opacity: 0.3;
 }
 
 .hero h1 {
@@ -157,11 +177,12 @@ body {
     margin: 0.75rem 0;
     border: 2px solid #E2E8F0;
     border-radius: 12px;
-    background: white;
+    background: var(--bg-card);
+    color: var(--text-main);
     font-size: 1.1rem;
     text-align: right;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 }
 
 .option-btn:hover {
@@ -214,14 +235,30 @@ body {
     gap: 10px;
 }
 
+.chat-header button {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.chat-header button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.15);
+}
+
+.chat-header button:active {
+    transform: scale(0.95);
+}
+
 .chat-body {
     height: 350px;
     padding: 1rem;
     overflow-y: auto;
-    background: #fff;
+    background: var(--bg-card);
     display: flex;
     flex-direction: column;
     gap: 12px;
+    transition: background-color 0.4s ease;
 }
 
 .message {
@@ -288,6 +325,47 @@ body {
 .badge-name {
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+/* Diagnostic Box */
+.diagnostic-note {
+    margin-top: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    font-size: 0.85rem;
+    border: 2px solid #ef4444;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15);
+}
+
+.diagnostic-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ef4444;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.diagnostic-header span {
+    font-size: 1.2rem;
+}
+
+.diagnostic-btn {
+    margin-top: 15px;
+    width: 100%;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.diagnostic-btn:hover {
+    transform: scale(1.02);
 }
 
 /* Responsive Design */
@@ -379,6 +457,67 @@ body {
     }
 }
 
+/* Light Theme Variables */
+body.light-theme {
+    --primary: #0D9488;
+    --primary-dark: #0F766E;
+    --bg-main: #F1F5F9;
+    --bg-card: #FFFFFF;
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --glass: rgba(255, 255, 255, 0.8);
+}
+
+body.light-theme .hero {
+    background: radial-gradient(at 0% 0%, hsla(180, 50%, 95%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(200, 50%, 90%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(300, 50%, 95%, 1) 0, transparent 50%);
+}
+
+body.light-theme .chat-body {
+    background: #FFFFFF;
+}
+
+body.light-theme .msg-bot {
+    background: #F1F5F9;
+}
+
+body.light-theme .suggestion-item {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+}
+
+/* Smooth transition for elements */
+.quiz-container,
+.glass,
+.chat-buddy,
+.message,
+.option-btn,
+.suggestion-item,
+.hero,
+.hero h1,
+.hero p {
+    transition: background-color 0.4s ease, background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+}
+
+/* File Upload Styles */
+.file-upload-wrapper.active {
+    display: block !important;
+}
+
+.img-attachment {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 12px;
+    margin-top: 8px;
+    display: block;
+}
+
+.bot-responding .chat-header #theme-toggle-btn {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .suggestion-item {
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
@@ -389,18 +528,44 @@ body {
     white-space: nowrap;
     transition: all 0.2s;
     color: var(--text-main);
+}
 
-    .suggestion-item:hover {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
+.suggestion-item:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
 
-    #chat-suggestions::-webkit-scrollbar {
-        height: 4px;
-    }
+#chat-suggestions::-webkit-scrollbar {
+    height: 4px;
+}
 
-    #chat-suggestions::-webkit-scrollbar-thumb {
-        background: #E2E8F0;
-        border-radius: 10px;
-    }}
+#chat-suggestions::-webkit-scrollbar-thumb {
+    background: #E2E8F0;
+    border-radius: 10px;
+}
+
+/* Modal System */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 400px;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}

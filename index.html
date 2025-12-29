@@ -86,12 +86,25 @@
                 <span style="font-size: 1.5rem;">🤖</span>
                 <span>دردشة رفيق</span>
             </div>
+            <button id="theme-toggle-btn"
+                style="background: transparent; border: none; color: white; cursor: pointer; font-size: 1.2rem; margin-left: 10px;">🌙</button>
+
 
             <button id="toggle-chat-btn"
                 style="background: transparent; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px;">▼</button>
         </div>
         <div id="chat-body" class="chat-body">
             <div class="message msg-bot">أهلاً بك! أنا هنا لمساعدتك في أي وقت. كيف تشعر اليوم؟</div>
+        </div>
+
+        <!-- File Upload Wrapper -->
+        <div class="file-upload-wrapper" style="padding: 0 1rem; display: none;">
+            <div style="position: relative; width: fit-content;">
+                <img class="file-preview"
+                    style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid #E2E8F0;">
+                <button id="cancel-file-btn"
+                    style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; width: 18px; height: 18px;">✕</button>
+            </div>
         </div>
 
         <!-- Suggestions Area -->
@@ -103,9 +116,15 @@
             <button class="suggestion-item">لغز علمي 🔍</button>
         </div>
         <div class="chat-input-container"
-            style="padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); display: flex; gap: 8px;">
+            style="padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); display: flex; gap: 8px; align-items: center;">
+
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <button id="add-file-btn"
+                style="background: #f1f5f9; border: none; padding: 0.5rem; border-radius: 10px; cursor: pointer; font-size: 1.2rem;">📎</button>
+
             <input type="text" id="chat-input" placeholder="اكتب سؤالك هنا..."
                 style="flex: 1; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0.5rem 1rem; outline: none;">
+
             <button id="stop-response-btn"
                 style="background: #ef4444; color: white; border: none; padding: 0.5rem; border-radius: 10px; cursor: pointer; display: none;"
                 title="إيقاف">🛑</button>
@@ -114,6 +133,9 @@
                 style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer;">إرسال</button>
         </div>
     </div>
+
+    <!-- Settings Modal -->
+
 
     <script src="app.js"></script>
 </body>
