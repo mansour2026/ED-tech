@@ -378,3 +378,29 @@ body {
         padding: 0.75rem !important;
     }
 }
+
+.suggestion-item {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    color: var(--text-main);
+
+    .suggestion-item:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    #chat-suggestions::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    #chat-suggestions::-webkit-scrollbar-thumb {
+        background: #E2E8F0;
+        border-radius: 10px;
+    }

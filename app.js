@@ -1,6 +1,17 @@
 // --- AI Configuration ---
-// IMPORTANT: OpenAI API Key
-const API_KEY = "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";
+// خيار 1: ضع مفتاحك هنا مباشرة (سهل ولكن قد يتم إيقافه من قبل جوجل إذا نشرت الكود)
+// في ملف app.js السطر رقم 3
+const HARDCODED_KEY = "AIzaSyDMK5jHwWJxhJg8Q_duxbKRVWnePfxmo5Q";
+
+// خيار 2: إذا تركت الخيار الأول فارغاً، سيطلب منك التطبيق المفتاح مرة واحدة ويحفظه في المتصفح
+function getApiKey() {
+    if (HARDCODED_KEY.trim() !== "") return HARDCODED_KEY.trim();
+    return localStorage.getItem('GEMINI_API_KEY');
+}
+
+function setApiKey(key) {
+    if (key) localStorage.setItem('GEMINI_API_KEY', key.trim());
+}
 
 const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح جداً للأطفال (عمر 6-12 سنة).
 مهمتك هي مساعدتهم على فهم الرياضيات والعلوم بطريقة مبسطة.
@@ -10,7 +21,8 @@ const SYSTEM_PROMPT = `أنت "رفيق"، معلم ذكي، صبور، ومرح
 - شجع الطالب دائماً بكلمات مثل "يا بطل"، "يا ذكي"، "رائع".
 - ركز على تشخيص نقاط الضعف التي تظهر في نتائج الطالب المذكورة في سياق المحادثة.`;
 
-let chatMessages = [{ role: "system", content: SYSTEM_PROMPT }];
+let chatMessages = [];
+let typingInterval, controller;
 
 // --- Data Configuration ---
 const quizData = [
@@ -19,7 +31,6 @@ const quizData = [
     { id: 3, question: "أي من الكسور التالية يمثل النصف؟", category: "fractions", options: ["1/3", "1/4", "1/2", "2/3"], correct: 2 },
     { id: 4, question: "ناتج عملية الضرب 4 × 3 هو:", category: "multiplication", options: ["7", "10", "12", "16"], correct: 2 },
     { id: 5, question: "ما هو الكسر المساوي لـ 2/4؟", category: "fractions", options: ["1/2", "1/3", "1/4", "3/4"], correct: 0 },
-    // New Questions
     { id: 6, question: "ما هو ناتج جمع 12 + 15؟", category: "addition", options: ["25", "27", "30", "22"], correct: 1 },
     { id: 7, question: "إذا كان معك 50 قرشاً وصرفت 20 قرشاً، كم تبقى معك؟", category: "subtraction", options: ["20", "25", "30", "35"], correct: 2 },
     { id: 8, question: "كم يساوي 5 × 5؟", category: "multiplication", options: ["20", "25", "30", "15"], correct: 1 },
@@ -38,41 +49,13 @@ const quizData = [
 ];
 
 const lessonsData = {
-    addition: {
-        title: "إتقان الجمع البسيط",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Placeholder
-        tips: ["تخيل الأرقام كأشياء حقيقية", "استخدم أصابعك أو الرسم"]
-    },
-    subtraction: {
-        title: "سر الطرح السريع",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["الطرح هو عكس الجمع", "فكر في النقصان"]
-    },
-    fractions: {
-        title: "فهم الكسور بسهولة",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["الكسر هو جزء من كل", "تخيل تقطيع البيتزا"]
-    },
-    multiplication: {
-        title: "عجائب الضرب",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["الضرب هو جمع متكرر", "احفظ الجداول بالتدريج"]
-    },
-    division: {
-        title: "أسرار القسمة",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["القسمة هي توزيع بالتساوي", "فكر في الضرب بالعكس"]
-    },
-    geometry: {
-        title: "عالم الأشكال",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["لاحظ الأشكال من حولك", "عد الأضلاع والزوايا"]
-    },
-    logic: {
-        title: "التفكير الذكي",
-        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        tips: ["فكر قبل الإجابة", "استخدم المنطق لحل الألغاز"]
-    }
+    addition: { title: "إتقان الجمع البسيط", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["تخيل الأرقام كأشياء حقيقية", "استخدم أصابعك أو الرسم"] },
+    subtraction: { title: "سر الطرح السريع", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["الطرح هو عكس الجمع", "فكر في النقصان"] },
+    fractions: { title: "فهم الكسور بسهولة", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["الكسر هو جزء من كل", "تخيل تقطيع البيتزا"] },
+    multiplication: { title: "عجائب الضرب", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["الضرب هو جمع متكرر", "احفظ الجداول بالتدريج"] },
+    division: { title: "أسرار القسمة", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["القسمة هي توزيع بالتساوي", "فكر في الضرب بالعكس"] },
+    geometry: { title: "عالم الأشكال", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["لاحظ الأشكال من حولك", "عد الأضلاع والزوايا"] },
+    logic: { title: "التفكير الذكي", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", tips: ["فكر قبل الإجابة", "استخدم المنطق لحل الألغاز"] }
 };
 
 // --- State Management ---
@@ -100,7 +83,6 @@ const chatInput = document.getElementById('chat-input');
 const sendChatBtn = document.getElementById('send-chat-btn');
 const progressBar = document.getElementById('quiz-progress-bar');
 const xpValDisplay = document.getElementById('xp-val');
-
 const toggleChatBtn = document.getElementById('toggle-chat-btn');
 
 // --- Initialization ---
@@ -123,7 +105,6 @@ function loadQuestion() {
     const q = quizData[currentState.currentQuestionIndex];
     questionText.innerText = q.question;
     optionsContainer.innerHTML = '';
-
     q.options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.classList.add('option-btn');
@@ -131,7 +112,6 @@ function loadQuestion() {
         btn.onclick = () => selectOption(idx);
         optionsContainer.appendChild(btn);
     });
-
     updateProgressBar();
     addBotMessage(`هيا يا بطل! السؤال ${currentState.currentQuestionIndex + 1} عن ${getCategoryNameInArabic(q.category)}.`);
 }
@@ -158,35 +138,19 @@ function finishQuiz() {
     quizSection.classList.add('hidden');
     dashboardSection.classList.remove('hidden');
     currentState.xp = currentState.answers.filter(a => a.correct).length * 50;
-
     analyzeResults();
     checkBadges();
     renderDashboard();
     renderBadges();
-
-    // Celebration!
-    confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#2DD4BF', '#FDE047', '#F43F5E']
-    });
-
+    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#2DD4BF', '#FDE047', '#F43F5E'] });
     addBotMessage(`رائع! لقد انتهينا. حصلت على ${currentState.xp} نقطة خبرة (XP)! لقد صممت لك خطة مخصصة.`);
 }
 
 function checkBadges() {
     const correctCount = currentState.answers.filter(a => a.correct).length;
-
-    if (correctCount === quizData.length) {
-        currentState.badges.push({ name: "العبقري الكامل", icon: "💎" });
-    }
-    if (currentState.score >= 100) {
-        currentState.badges.push({ name: "بطل الرياضيات", icon: "🏆" });
-    }
-    if (currentState.answers.length >= 10) {
-        currentState.badges.push({ name: "المثابر", icon: "🔥" });
-    }
+    if (correctCount === quizData.length) currentState.badges.push({ name: "العبقري الكامل", icon: "💎" });
+    if (currentState.score >= 100) currentState.badges.push({ name: "بطل الرياضيات", icon: "🏆" });
+    if (currentState.answers.length >= 10) currentState.badges.push({ name: "المثابر", icon: "🔥" });
 }
 
 function renderBadges() {
@@ -231,86 +195,156 @@ function renderDashboard() {
 }
 
 function getCategoryNameInArabic(cat) {
-    const names = {
-        addition: "الجمع",
-        subtraction: "الطرح",
-        fractions: "الكسور",
-        multiplication: "الضرب",
-        division: "القسمة",
-        geometry: "الهندسة",
-        logic: "المنطق"
-    };
+    const names = { addition: "الجمع", subtraction: "الطرح", fractions: "الكسور", multiplication: "الضرب", division: "القسمة", geometry: "الهندسة", logic: "المنطق" };
     return names[cat] || cat;
 }
+
+// --- AI Logic Enhancements (Typing Effect & Abort) ---
+function typingEffect(text, textElement, botMsgDiv) {
+    textElement.textContent = "";
+    const words = text.split(" ");
+    let wordIndex = 0;
+
+    typingInterval = setInterval(() => {
+        if (wordIndex < words.length) {
+            textElement.textContent += (wordIndex === 0 ? "" : " ") + words[wordIndex++];
+            chatBody.scrollTop = chatBody.scrollHeight;
+        } else {
+            clearInterval(typingInterval);
+            botMsgDiv.classList.remove("loading");
+            document.getElementById('stop-response-btn').style.display = 'none';
+        }
+    }, 40);
+}
+
+document.getElementById('stop-response-btn')?.addEventListener('click', () => {
+    controller?.abort();
+    clearInterval(typingInterval);
+    const lastBotMsg = chatBody.querySelector('.msg-bot.loading');
+    if (lastBotMsg) {
+        lastBotMsg.classList.remove('loading');
+        const textEl = lastBotMsg.querySelector('.bot-text');
+        if (textEl) textEl.innerText += " (تم الإيقاف)";
+    }
+    document.getElementById('stop-response-btn').style.display = 'none';
+});
+
+// --- Suggestions Handler ---
+document.querySelectorAll('.suggestion-item').forEach(item => {
+    item.addEventListener('click', () => {
+        chatInput.value = item.innerText;
+        handleUserMessage();
+    });
+});
 
 sendChatBtn.addEventListener('click', handleUserMessage);
 chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUserMessage(); });
 
 async function handleUserMessage() {
+    let currentKey = getApiKey();
+    if (!currentKey) {
+        currentKey = prompt("من فضلك أدخل مفتاح Gemini API الخاص بك للاستمرار (يمكنك الحصول عليه من Google AI Studio):");
+        if (currentKey) {
+            setApiKey(currentKey);
+        } else {
+            addBotMessage("عذراً، أحتاج إلى مفتاح API لكي أتمكن من الرد عليك. يرجى تحديث الصفحة وإدخاله.");
+            return;
+        }
+    }
+
     const text = chatInput.value.trim();
     if (!text) return;
-
 
     addUserMessage(text);
     chatInput.value = '';
 
-    const tempMsg = document.createElement('div');
-    tempMsg.className = 'message msg-bot';
-    tempMsg.innerText = "... رفيق يفكر ...";
-    chatBody.appendChild(tempMsg);
+    // Create bot message placeholder with loading state
+    const botMsgDiv = document.createElement('div');
+    botMsgDiv.className = 'message msg-bot loading';
+
+    const avatar = document.createElement('span');
+    avatar.innerText = "🤖";
+    avatar.style.marginLeft = "8px";
+
+    const textElement = document.createElement('span');
+    textElement.className = "bot-text";
+    textElement.innerText = "... رفيق يفكر ...";
+
+    botMsgDiv.appendChild(avatar);
+    botMsgDiv.appendChild(textElement);
+    chatBody.appendChild(botMsgDiv);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    chatMessages.push({ role: "user", content: text });
+    // Show stop button
+    document.getElementById('stop-response-btn').style.display = 'block';
 
-    // --- API Configuration ---
-    // IMPORTANT: Replace the placeholder below with your NEW OpenAI API Key
-    // You can get one from: https://platform.openai.com/api-keys
-    const API_URL = "https://api.openai.com/v1/chat/completions";
-    const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(API_URL);
+    // Setup AbortController
+    controller = new AbortController();
+
+    // Prepare message history
+    if (chatMessages.length === 0) {
+        chatMessages.push({ role: "user", parts: [{ text: `التعليمات: ${SYSTEM_PROMPT}\n\nرسالتي الأولى هي: ${text}` }] });
+    } else {
+        chatMessages.push({ role: "user", parts: [{ text: text }] });
+    }
+
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`;
 
     try {
-        const response = await fetch(PROXY_URL, {
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: chatMessages,
-                temperature: 0.7
-            })
+                contents: chatMessages,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+            }),
+            signal: controller.signal
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const errorMessage = errorData.error?.message || `Status: ${response.status}`;
-
-            if (response.status === 401) {
-                throw new Error("مفتاح API غير صالح. يرجى التأكد من استبدال المفتاح القديم بمفتاح جديد صالح في ملف app.js.");
-            } else if (response.status === 429) {
-                throw new Error("لقد تجاوزت حد الطلبات المسموح به. تأكد من وجود رصيد كافٍ في حساب OpenAI الخاص بك.");
-            } else if (response.status === 404) {
-                throw new Error("الموديل المطلوب غير موجود. تأكد من أن حسابك يدعم 'gpt-4o-mini'.");
-            }
-
-            throw new Error(errorMessage);
+            const technicalError = new Error(errorMessage);
+            technicalError.geminiError = errorMessage;
+            technicalError.status = response.status;
+            throw technicalError;
         }
 
         const data = await response.json();
-        const botResponse = data.choices[0].message.content;
-        tempMsg.remove();
-        addBotMessage(botResponse);
-        chatMessages.push({ role: "assistant", content: botResponse });
+        const responseText = data.candidates[0].content.parts[0].text.trim();
+
+        // Use typing effect for the response
+        textElement.innerText = ""; // Clear the loading text
+        typingEffect(responseText, textElement, botMsgDiv);
+
+        chatMessages.push({ role: "model", parts: [{ text: responseText }] });
+
     } catch (error) {
-        console.error("OpenAI Connection Error:", error);
-        tempMsg.remove();
+        console.error("Gemini Connection Error:", error);
+        botMsgDiv.classList.remove("loading");
+
+        if (error.name === "AbortError") {
+            textElement.innerText = "تم إيقاف التفكير.";
+            textElement.style.color = "#d92939";
+            document.getElementById('stop-response-btn').style.display = 'none';
+            return;
+        }
 
         let errorMsg = "عذراً يا بطل، حدثت مشكلة في الاتصال بالمساعد الذكي.";
+        let detailedError = error.message;
 
-        // Detailed error for the user
-        addBotMessage(`${errorMsg}\n\n🔍 **التفاصيل الفنية:**\n${error.message}`);
+        document.getElementById('stop-response-btn').style.display = 'none';
 
+        if (error.geminiError) {
+            detailedError = `Gemini Error: ${error.geminiError}\nStatus: ${error.status}`;
+            if (error.status === 400 || error.status === 401) {
+                localStorage.removeItem('GEMINI_API_KEY');
+                detailedError += "\n\n⚠️ يبدو أن المفتاح غير صالح. تم مسحه من الذاكرة، يرجى المحاولة مرة أخرى بمفتاح جديد.";
+            }
+        }
+
+        textElement.innerHTML = `<strong>${errorMsg}</strong><br><small>🔍 التفاصيل الفنية:<br>${detailedError}</small>`;
+        textElement.style.color = "#d92939";
     }
 }
 

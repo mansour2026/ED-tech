@@ -86,16 +86,30 @@
                 <span style="font-size: 1.5rem;">🤖</span>
                 <span>دردشة رفيق</span>
             </div>
+
             <button id="toggle-chat-btn"
                 style="background: transparent; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px;">▼</button>
         </div>
         <div id="chat-body" class="chat-body">
             <div class="message msg-bot">أهلاً بك! أنا هنا لمساعدتك في أي وقت. كيف تشعر اليوم؟</div>
         </div>
+
+        <!-- Suggestions Area -->
+        <div id="chat-suggestions"
+            style="padding: 0.5rem 1rem; display: flex; gap: 8px; overflow-x: auto; background: white; border-top: 1px solid rgba(0,0,0,0.05);">
+            <button class="suggestion-item">اشرح لي الكسور 🍕</button>
+            <button class="suggestion-item">مثال على الجمع ➕</button>
+            <button class="suggestion-item">قصة عن الأرقام 📖</button>
+            <button class="suggestion-item">لغز علمي 🔍</button>
+        </div>
         <div class="chat-input-container"
             style="padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); display: flex; gap: 8px;">
             <input type="text" id="chat-input" placeholder="اكتب سؤالك هنا..."
                 style="flex: 1; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0.5rem 1rem; outline: none;">
+            <button id="stop-response-btn"
+                style="background: #ef4444; color: white; border: none; padding: 0.5rem; border-radius: 10px; cursor: pointer; display: none;"
+                title="إيقاف">🛑</button>
+
             <button id="send-chat-btn"
                 style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer;">إرسال</button>
         </div>
