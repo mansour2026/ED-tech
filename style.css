@@ -269,7 +269,8 @@ body {
 }
 
 .msg-bot {
-    background: #F1F5F9;
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     align-self: flex-start;
     border-bottom-left-radius: 4px;
 }
@@ -519,8 +520,8 @@ body.light-theme .suggestion-item {
 }
 
 .suggestion-item {
-    background: #F8FAFC;
-    border: 1px solid #E2E8F0;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 6px 12px;
     font-size: 0.85rem;
@@ -532,7 +533,7 @@ body.light-theme .suggestion-item {
 
 .suggestion-item:hover {
     background: var(--primary);
-    color: white;
+    color: var(--text-main);
     border-color: var(--primary);
 }
 
@@ -568,4 +569,15 @@ body.light-theme .suggestion-item {
     border-radius: var(--radius);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     text-align: center;
+}
+
+/* Selection Highlighting */
+::selection {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+::-moz-selection {
+    background: var(--primary);
+    color: #ffffff;
 }
