@@ -363,4 +363,3 @@ function addBotMessage(text) {
     chatBody.appendChild(msg);
     chatBody.scrollTop = chatBody.scrollHeight;
 }
-
