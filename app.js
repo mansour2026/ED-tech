@@ -1,7 +1,7 @@
 // --- AI Configuration ---
 // خيار 1: ضع مفتاحك هنا مباشرة (سهل ولكن قد يتم إيقافه من قبل جوجل إذا نشرت الكود)
 // في ملف app.js السطر رقم 3
-const HARDCODED_KEY = "AIzaSyDMK5jHwWJxhJg8Q_duxbKRVWnePfxmo5Q";
+const HARDCODED_KEY = "AIzaSyCJBQ_JVAgiBSQjSldkrdFMF9xqFw7A9Xk";
 
 // خيار 2: إذا تركت الخيار الأول فارغاً، سيطلب منك التطبيق المفتاح مرة واحدة ويحفظه في المتصفح
 function getApiKey() {
@@ -363,3 +363,4 @@ function addBotMessage(text) {
     chatBody.appendChild(msg);
     chatBody.scrollTop = chatBody.scrollHeight;
 }
+
