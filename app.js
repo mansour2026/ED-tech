@@ -1,4 +1,4 @@
-const API_KEY = "AIzaSyCB980uOBdCIe7I28eP_8AmdfsV4eMP4CA";
+const API_KEY = "AIzaSyBfgug8-oNhHKJjOoyBJFSYqXWge4XHxJQ";
 
 
 
@@ -137,7 +137,7 @@ const generateResponse = async (botMsgDiv, currentMessage, currentFile) => {
                     if (response.status === 429) {
                         console.warn(`Model ${model.name} (${version}) rate limited. Waiting...`);
                         lastError = new Error("تم الوصول للحد الأقصى للطلبات (429).");
-                        await new Promise(r => setTimeout(r, 1500));
+                        await new Promise(r => setTimeout(r, 4000));
                         continue;
                     }
                     if (response.status === 404) {
