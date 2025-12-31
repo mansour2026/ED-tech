@@ -416,4 +416,3 @@ function getCategoryNameInArabic(cat) {
     const names = { addition: "الجمع", subtraction: "الطرح", fractions: "الكسور", multiplication: "الضرب", division: "القسمة", geometry: "الهندسة", logic: "المنطق" };
     return names[cat] || cat;
 }
-
