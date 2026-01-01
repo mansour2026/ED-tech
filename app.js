@@ -1,4 +1,4 @@
-const API_KEY = "AIzaSyAkFQNlx-lTE68BrfG3D6QXEmRFKAbDjM0";
+const API_KEY = "AIzaSyCoELFbmkZU8vTKa1Hn_FdpsUZ1HDNLpuE";
 
 
 
@@ -416,4 +416,3 @@ function getCategoryNameInArabic(cat) {
     const names = { addition: "الجمع", subtraction: "الطرح", fractions: "الكسور", multiplication: "الضرب", division: "القسمة", geometry: "الهندسة", logic: "المنطق" };
     return names[cat] || cat;
 }
-
